@@ -1,45 +1,111 @@
-#!/usr/bin/env python3
 """
-This module is the mini-project for the MQTT unit.  This module will be running on your PC and communicating with the
-m5_ev3_remote_drive.py module that is running on your EV3 (you have to write that module too, but it's easier).
-Only the Tkinter GUI has been made for you.  You will need to implement all of the MQTT communication.  The goal is to
-have a program running on your computer that can control the EV3.
+Contains final project code
 
-You will need to have the following features:
-  -- Clickable drive direction buttons to drive forward (up), backwards (down), left, right, and stop (space)
-    -- Keyboard shortcut keys that behave the same as clicking the buttons (this has already been wired up for you)
-  -- An entry box for the left and right drive motor speeds.
-    -- If both become set to 900 all of the drive direction buttons will go fast, for example forward goes 900 900
-    -- If both become set to 300 all of the drive direction buttons will go slower, for example reverse goes -300 -300
-    -- If 500 then left does -500 500, which causes the robot to spin left (use half speed -250 250 if too fast)
-    -- If set differently to say 600 left, 300 right the robot will drive and arc, for example forward goes 600 300
-  -- In addition to the drive features there needs to be a clickable button for Arm Up and Arm Down
-    -- There also need to be keyboard shortcut for Arm Up (u) and Arm Down (j).  Arm calibration is not required.
-
-  -- Finally you need 2 buttons for ending your program:
-    -- Quit, which stops only this program and allows the EV3 program to keep running
-    -- Exit, which sends a shutdown message to the EV3, then ends it's own program as well.
-
-You can start by running the code to see the GUI, but don't expect button clicks to do anything useful yet.
-
-Authors: David Fisher and PUT_YOUR_NAME_HERE.
-"""  # TODO: 1. PUT YOUR NAME IN THE ABOVE LINE.
+Author: Rebekah Doherty
+"""
 
 import tkinter
 from tkinter import ttk
 
 import mqtt_remote_method_calls as com
+import ev3dev.ev3 as ev3
+import time
+
+import robot_controller as robo
+
+from PIL import ImageTk, Image
+import random
+
+import json
+
+import collections
+import paho.mqtt.client as mqtt
 
 
-
+#  Opening Screen
 def main():
-    # DONE: 2. Setup an mqtt_client.  Notice that since you don't need to receive any messages you do NOT need to have
-    # a MyDelegate class.  Simply construct the MqttClient with no parameter in the constructor (easy).
+    mqtt_client = com.MqttClient()
+    mqtt_client.connect_to_ev3()
+    robot = robo.Snatch3r()
+    root = tkinter.Tk()
+    root.title("Welcome to Lost in Space")
+    root.configure(background='dark blue')
+
+    main_frame = ttk.Frame(root, padding=20)
+    main_frame.grid()  # only grid call that does NOT need a row and column
+
+    #  Importing Image
+    path = "Lost_in_Space.jpg"
+    img = ImageTk.PhotoImage(Image.open(path))
+
+    mqtt_client.send_message("play_audio")
+
+
+    # The Label widget is a standard Tkinter widget used to display a text or image on the screen.
+    panel = ttk.Label(main_frame, image=img, padding=20)
+    panel.grid()
+
+    #  Are you ready to begin?
+    adventure_button = ttk.Button(main_frame, text='Are You Ready to Begin Your Space Adventure?')
+    adventure_button['command'] = lambda: begin_adventure()
+    adventure_button.grid()
+
+    root.mainloop()
+
+
+#  Beginning Adventure:
+def begin_adventure():
+    # ev3.Sound.speak('Welcome Pilot')
+
+    root = tkinter.Tk()
+    root.title("Your Adventure is Beginning")
+    root.configure(background='dark blue')
+
+    mqtt_client = com.MqttClient()
+    mqtt_client.connect_to_ev3()
+    mqtt_client.send_message("say_hello_pilot")
+
+    main_frame = ttk.Frame(root, padding=20)
+    main_frame.grid()  # only grid call that does NOT need a row and column
+
+    choose_path_label = ttk.Label(main_frame, text="What Would You Like To Do?")
+    choose_path_label.grid(row=2, column=1)
+
+    planet_button = ttk.Button(main_frame, text='Planet Discovery')
+    planet_button.grid(row=3, column=0)
+    planet_button['command'] = lambda: planet_adventure()
+    planet_button.grid()
+
+    savior_button = ttk.Button(main_frame, text='Savior Mission')
+    savior_button['command'] = lambda: savior()
+    savior_button.grid(row=3, column=1)
+    savior_button.grid()
+
+    adventure_button = ttk.Button(main_frame, text='Unknown')
+    adventure_button['command'] = lambda: unknown()
+    adventure_button.grid(row=3, column=2)
+    adventure_button.grid()
+
+
+def print_contents(entry_box):
+    """
+    Prints onto the Console the contents of the given ttk.Entry.
+
+    In this example, it is used as the function that is "CALLED BACK"
+    when an event (namely, the pressing of a certain Button) occurs.
+    """
+    contents_of_entry_box = entry_box.get()
+    print(contents_of_entry_box)
+
+
+#  Option 1:
+def planet_adventure():
+    #  Red planets are bad, any other planet color is good
     mqtt_client = com.MqttClient()
     mqtt_client.connect_to_ev3()
 
     root = tkinter.Tk()
-    root.title("MQTT Remote")
+    root.title("MQTT Spaceship Remote")
 
     main_frame = ttk.Frame(root, padding=20, relief='raised')
     main_frame.grid()
@@ -47,20 +113,16 @@ def main():
     left_speed_label = ttk.Label(main_frame, text="Left")
     left_speed_label.grid(row=0, column=0)
     left_speed_entry = ttk.Entry(main_frame, width=8)
-    left_speed_entry.insert(0, "600")
+    left_speed_entry.insert(0, "400")
     left_speed_entry.grid(row=1, column=0)
 
     right_speed_label = ttk.Label(main_frame, text="Right")
     right_speed_label.grid(row=0, column=2)
     right_speed_entry = ttk.Entry(main_frame, width=8, justify=tkinter.RIGHT)
-    right_speed_entry.insert(0, "600")
+    right_speed_entry.insert(0, "400")
     right_speed_entry.grid(row=1, column=2)
 
-    # DONE: 3. Implement the callbacks for the drive buttons. Set both the click and shortcut key callbacks.
-    #
-    # To help get you started the arm up and down buttons have been implemented.
-    # You need to implement the five drive buttons.  One has been writen below to help get you started but is commented
-    # out. You will need to change some_callback1 to some better name, then pattern match for other button / key combos.
+    #  Assignments:
 
     forward_button = ttk.Button(main_frame, text="Forward")
     forward_button.grid(row=2, column=1)
@@ -114,30 +176,28 @@ def main():
     root.mainloop()
 
 
-# ----------------------------------------------------------------------
-# Tkinter callbacks
-# ----------------------------------------------------------------------
-# DONE: 4. Implement the functions for the drive button callbacks.
+#  Option 2:
+def savior():
+    mqtt_client = com.MqttClient()
+    mqtt_client.connect_to_ev3()
+    #  Use IR remote to drive to the beacon
+    print("savior")
+    mqtt_client.send_message("color_report")
 
-# DONE: 5. Call over a TA or instructor to sign your team's checkoff sheet and do a code review.  This is the final one!
-#
-# Observations you should make, you did basically this same program using the IR Remote, but your computer can be a
-# remote control that can do A LOT more than an IR Remote.  We are just doing the basics here.
+
+#  Option 3:
+def unknown():
+    print("unknown")
 
 
 # Arm command callbacks
 def send_up(mqtt_client):
-    # import ev3dev.ev3 as ev3
-    # touch_sensor = ev3.TouchSensor()
-    # assert touch_sensor
     print("arm_up")
-    mqtt_client.send_message("beep")
-    # mqtt_client.send_message("arm_up", touch_sensor)
+    mqtt_client.send_message("arm_up")
 
 
 def send_down(mqtt_client):
     print("arm_down")
-    mqtt_client.send_message("beep")
     mqtt_client.send_message("arm_down")
 
 
@@ -152,22 +212,22 @@ def quit_program(mqtt_client, shutdown_ev3):
 
 def go_forward(mqtt_client, left_motor, right_motor):
     print("go_forward")
-    mqtt_client.send_message("drive_inches", [12, 600])
+    mqtt_client.send_message("drive_inches", [2, 400])
 
 
 def go_backward(mqtt_client, left_motor, right_motor):
     print("go_backward")
-    mqtt_client.send_message("drive_inches", [-12, 600])
+    mqtt_client.send_message("drive_inches", [-2, 400])
 
 
 def go_left(mqtt_client, left_motor, right_motor):
     print("go_left")
-    mqtt_client.send_message("turn_degrees", [45, 600])
+    mqtt_client.send_message("turn_degrees", [45, 400])
 
 
 def go_right(mqtt_client, left_motor, right_motor):
     print("go_right")
-    mqtt_client.send_message("turn_degrees", [-45, 600])
+    mqtt_client.send_message("turn_degrees", [-45, 400])
 
 
 def just_stop(mqtt_client):
@@ -176,7 +236,4 @@ def just_stop(mqtt_client):
 
 
 
-# ----------------------------------------------------------------------
-# Calls  main  to start the ball rolling.
-# ----------------------------------------------------------------------
 main()

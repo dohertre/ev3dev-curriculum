@@ -3,7 +3,7 @@
 Contains example code snippets used in the drive motor lecture.  Don't try to actually run this file!
 These are just snippets used in the lecture, not actual code to run!
 
-TODO: 1. PASSIVELY LISTEN TO THE LECTURE ABOUT MQTT
+DONE: 1. PASSIVELY LISTEN TO THE LECTURE ABOUT MQTT
 https://docs.google.com/presentation/d/1gQt1K4X2xzcspKMn2S0X98vhzVNmLA-xoQe5rp58CVE/edit?usp=sharing
 
 Author: David Fisher
@@ -85,7 +85,6 @@ def using_a_robot_wrapper_class():
         mqtt_client = com.MqttClient(my_delegate)
         my_delegate.mqtt_client = mqtt_client
         mqtt_client.connect_to_pc()
-        my_delegate.loop_forever()
         print("Shutdown complete.")
 
     main()
@@ -115,3 +114,6 @@ def the_computer_can_receive_messages_too():
 
     time.sleep(5)
     mqtt_client.close()
+
+
+receiving_messages_from_pc()
