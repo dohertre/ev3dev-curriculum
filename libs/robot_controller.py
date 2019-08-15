@@ -64,7 +64,7 @@ class Snatch3r(object):
         right_motor.wait_while('running')
 
         if cl.color == 5:
-            ev3.Sound.speak("Danger, Will Robinson")
+            ev3.Sound.play("/home/robot/csse120/assets/sounds/danger_louder.wav")
             ev3.Leds.set_color(ev3.Leds.LEFT, ev3.Leds.RED)
             ev3.Leds.set_color(ev3.Leds.RIGHT, ev3.Leds.RED)
             motor_turns_needed_in_degrees = -6 * degrees_per_inch
@@ -254,7 +254,8 @@ class Snatch3r(object):
         ev3.Sound.speak("Welcome, Pilot")
 
 
-    def play_audio(self):
+    def play_old_danger(self):
+        ev3.Sound.play("/home/robot/csse120/assets/sounds/lost_in_space_danger.wav")
+
+    def play_new_danger(self):
         ev3.Sound.play("/home/robot/csse120/assets/sounds/danger_will_robinson.wav")
-
-

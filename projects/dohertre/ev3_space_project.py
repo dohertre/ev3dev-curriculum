@@ -38,9 +38,6 @@ def main():
     path = "Lost_in_Space.jpg"
     img = ImageTk.PhotoImage(Image.open(path))
 
-    mqtt_client.send_message("play_audio")
-
-
     # The Label widget is a standard Tkinter widget used to display a text or image on the screen.
     panel = ttk.Label(main_frame, image=img, padding=20)
     panel.grid()
@@ -81,8 +78,8 @@ def begin_adventure():
     savior_button.grid(row=3, column=1)
     savior_button.grid()
 
-    adventure_button = ttk.Button(main_frame, text='Unknown')
-    adventure_button['command'] = lambda: unknown()
+    adventure_button = ttk.Button(main_frame, text='What Can I Say?')
+    adventure_button['command'] = lambda: what_can_i_say()
     adventure_button.grid(row=3, column=2)
     adventure_button.grid()
 
@@ -186,8 +183,35 @@ def savior():
 
 
 #  Option 3:
-def unknown():
-    print("unknown")
+def what_can_i_say():
+    mqtt_client = com.MqttClient()
+    mqtt_client.connect_to_ev3()
+
+    root = tkinter.Tk()
+    root.title("What Can I Say?")
+
+    main_frame = ttk.Frame(root, padding=20, relief='raised')
+    main_frame.grid()
+
+    path = "new_vs_old.jpg"
+    img = ImageTk.PhotoImage(Image.open(path))
+
+    panel = ttk.Label(main_frame, image=img, padding=20)
+    panel.grid()
+
+    left_button = ttk.Button(main_frame, text="2018")
+    left_button.grid(row=3, column=0)
+    # left_button and '<Left>' key
+    left_button['command'] = lambda: danger_2018(mqtt_client)
+    root.bind('<Left>', lambda event: danger_2018(mqtt_client))
+
+    right_button = ttk.Button(main_frame, text="1965")
+    right_button.grid(row=3, column=2)
+    # right_button and '<Right>' key
+    right_button['command'] = lambda: danger_1965(mqtt_client)
+    root.bind('<Left>', lambda event: danger_1965(mqtt_client))
+
+    root.mainloop()
 
 
 # Arm command callbacks
@@ -233,6 +257,14 @@ def go_right(mqtt_client, left_motor, right_motor):
 def just_stop(mqtt_client):
     print("just_stop")
     mqtt_client.send_message("shutdown")
+
+
+def danger_2018(mqtt_client):
+    mqtt_client.send_message("play_new_danger")
+
+
+def danger_1965(mqtt_client):
+    mqtt_client.send_message("play_old_danger")
 
 
 
